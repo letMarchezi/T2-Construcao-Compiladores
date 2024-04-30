@@ -9,15 +9,18 @@ package br.ufscar.dc.compiladores.alguma.grammar;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+
+
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 
 public class Principal {
     
     // Criação de buffer para armazenar a saída
     private static StringBuilder buffer = new StringBuilder();
     
-    public static void main(String[] args) {
+    public static void main(String args[]) throws IOException {
         // Validação da quantidade de argumentos
         if (args.length < 2) {
             System.out.println("Uso: java -jar analisador-sintatico-compilado.jar "
@@ -25,25 +28,18 @@ public class Principal {
             System.exit(0);
         }
 
-
         // Criação do diretório de saída
         createOutputDirectory(args[1]);
 
         try {
-            // Leitura dos caracteres
             CharStream cs = CharStreams.fromFileName(args[0]);
-            AlgumaGrammarLexer lexer = new AlgumaGrammarLexer(cs);
-
-            // Remove a classe padrão de listeners para erros  
-
+            AlgumaLexer lexer = new AlgumaLexer(cs);
             CommonTokenStream tokens = new CommonTokenStream(lexer);
-            AlgumaGrammarParser parser = new AlgumaGrammarParser(tokens);
-            parser.removeErrorListeners();
-            
-            // Adicionando a classe CustomErrorListener com método customizado para erros de sintaxe (syntaxError)
-            parser.addErrorListener(new CustomErrorListener(buffer));
-            // Invocando o parser
-            parser.programa();
+            AlgumaParser parser = new AlgumaParser(tokens);
+            ProgramaContext arvore = parser.programa();
+            AlgumaSemantico as = new AlgumaSemantico();
+            as.visitPrograma(arvore);
+            AlgumaSemanticoUtils.errosSemanticos.forEach((s) -> System.out.println(s));
             
         } catch (Exception ex) {
             // Detecção de exceções
@@ -51,7 +47,7 @@ public class Principal {
         }
 
         // Escreve o resultado do buffer no arquivo de saída
-        writeOutputToFile(args[1]);
+        //writeOutputToFile(args[1]);
     }
 
     /**
